@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>발자국 — 나의 로드 매니저</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0D0D0F;
+  --panel:#141416;
+  --panel2:#1a1a1d;
+  --accent:#00FFC2;
+  --accent-dim:rgba(0,255,194,0.12);
+  --accent-border:rgba(0,255,194,0.25);
+  --text:#E8E8E8;
+  --muted:#A0A8B0;
+  --border:rgba(255,255,255,0.08);
+  --border-hover:rgba(255,255,255,0.15);
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  line-height:1.7;
+}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--accent);opacity:.4}
+
+/* ── STARS BG ── */
+#stars-canvas{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 56px;height:60px;
+  background:rgba(13,13,15,0.9);
+  border-bottom:0.5px solid var(--border);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Space Mono',monospace;
+  font-size:14px;letter-spacing:.06em;color:var(--accent);
+  text-decoration:none;
+}
+.nav-logo-icon{
+  width:28px;height:28px;border:1.5px solid var(--accent);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;
+}
+.nav-links{display:flex;gap:28px;list-style:none;align-items:center}
+.nav-links a{
+  font-size:12px;color:var(--muted);text-decoration:none;
+  letter-spacing:.08em;transition:color .2s;
+  position:relative;
+}
+.nav-links a:hover{color:var(--accent)}
+.nav-links a.active{color:var(--accent)}
+.nav-links a.active::after{
+  content:'';position:absolute;bottom:-4px;left:0;right:0;
+  height:1px;background:var(--accent);border-radius:100px;
+  box-shadow:0 0 6px var(--accent);
+}
+.nav-badge{
+  font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--muted);letter-spacing:.1em;
+  padding:4px 10px;border:0.5px solid var(--border);
+  border-radius:100px;
+}
+
+/* ── HERO ── */
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:100px 24px 80px;
+}
+.hero-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:11px;letter-spacing:.2em;
+  color:var(--accent);text-transform:uppercase;
+  margin-bottom:32px;
+  opacity:0;animation:fadeUp .6s .2s forwards;
+}
+.hero-title{
+  font-size:clamp(64px,10vw,120px);
+  font-weight:900;line-height:1;
+  letter-spacing:-.03em;
+  margin-bottom:28px;
+  opacity:0;animation:fadeUp .7s .35s forwards;
+}
+.hero-title .accent{color:var(--accent)}
+.hero-subtitle{
+  font-size:clamp(15px,2vw,18px);color:var(--muted);
+  max-width:540px;line-height:1.9;
+  margin-bottom:52px;
+  opacity:0;animation:fadeUp .7s .5s forwards;
+}
+.hero-chips{
+  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+  margin-bottom:80px;
+  opacity:0;animation:fadeUp .7s .65s forwards;
+}
+.chip{
+  padding:7px 16px;border:0.5px solid var(--border);
+  border-radius:100px;font-size:11px;color:var(--muted);
+  background:var(--panel);letter-spacing:.05em;
+  transition:all .2s;
+}
+.chip.on{border-color:var(--accent-border);color:var(--accent);background:var(--accent-dim)}
+.chip:hover{border-color:var(--border-hover);color:var(--text)}
+.hero-scroll{
+  font-size:10px;letter-spacing:.16em;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  opacity:0;animation:fadeUp .7s .8s forwards;
+}
+.hero-scroll::after{
+  content:'';width:1px;height:52px;
+  background:linear-gradient(var(--accent),transparent);
+  animation:scrollLine 2s ease-in-out infinite;
+}
+@keyframes scrollLine{
+  0%{transform:scaleY(0);transform-origin:top}
+  50%{transform:scaleY(1);transform-origin:top}
+  51%{transform:scaleY(1);transform-origin:bottom}
+  100%{transform:scaleY(0);transform-origin:bottom}
+}
+
+/* ── SECTION BASE ── */
+section{
+  position:relative;z-index:1;
+  padding:120px 0;
+  border-top:0.5px solid var(--border);
+}
+.container{max-width:1120px;margin:0 auto;padding:0 56px}
+.sec-label{
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:.22em;
+  color:var(--accent);text-transform:uppercase;
+  margin-bottom:14px;display:block;
+}
+.sec-title{
+  font-size:clamp(30px,4vw,48px);
+  font-weight:700;line-height:1.1;
+  letter-spacing:-.02em;
+  margin-bottom:16px;
+}
+.sec-desc{
+  font-size:15px;color:var(--muted);
+  max-width:560px;line-height:1.9;
+  margin-bottom:72px;
+}
+
+/* ── REVEAL ── */
+.reveal{
+  opacity:0;transform:translateY(32px);
+  transition:opacity .75s ease, transform .75s ease;
+}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ── PROBLEM SECTION ── */
+.problem-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:20px;
+}
+.prob-card{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:16px;padding:32px;
+  transition:border-color .25s;
+}
+.prob-card:hover{border-color:var(--border-hover)}
+.prob-card-num{
+  font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--accent);
+  letter-spacing:.14em;margin-bottom:16px;
+}
+.prob-card-q{
+  font-size:17px;font-weight:700;margin-bottom:10px;line-height:1.5;
+}
+.prob-card-a{font-size:13px;color:var(--muted);line-height:1.9}
+
+/* ── FEATURE SCROLL SECTIONS ── */
+.feat-section{
+  display:grid;grid-template-columns:1fr 1fr;gap:56px;
+  align-items:center;
+  padding:80px 0;
+  border-top:0.5px solid var(--border);
+}
+.feat-section:first-child{border-top:none;padding-top:0}
+.feat-section.reverse{direction:rtl}
+.feat-section.reverse > *{direction:ltr}
+.feat-section-media{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:20px;overflow:hidden;
+}
+.feat-section-chrome{
+  background:var(--panel2);border-bottom:0.5px solid var(--border);
+  padding:11px 16px;display:flex;align-items:center;gap:7px;
+}
+.feat-chrome-dot{width:9px;height:9px;border-radius:50%}
+.feat-chrome-label{
+  font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--muted);margin-left:auto;letter-spacing:.06em;
+}
+.feat-section-video{
+  width:100%;display:block;max-height:480px;
+  object-fit:contain;background:#000;
+}
+.feat-section-img{
+  width:100%;display:block;max-height:480px;object-fit:cover;
+}
+.feat-section-info{}
+.feat-num{
+  font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--accent);letter-spacing:.18em;margin-bottom:16px;display:block;
+}
+.feat-section-title{
+  font-size:clamp(22px,3vw,32px);font-weight:700;
+  line-height:1.2;letter-spacing:-.02em;margin-bottom:14px;
+}
+.feat-section-desc{
+  font-size:14px;color:var(--muted);line-height:1.95;margin-bottom:20px;
+}
+.feat-section-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--accent);padding:5px 13px;border-radius:100px;
+  background:var(--accent-dim);border:0.5px solid var(--accent-border);
+  letter-spacing:.1em;
+}
+.feat-section-bullets{
+  display:flex;flex-direction:column;gap:10px;margin-top:20px;
+}
+.feat-bullet{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13px;color:var(--muted);line-height:1.7;
+}
+.feat-bullet-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  margin-top:7px;flex-shrink:0;
+}
+
+/* video controls (per-video) */
+.feat-video-ctrl{
+  padding:12px 16px;border-top:0.5px solid var(--border);
+  background:var(--panel2);display:flex;align-items:center;gap:10px;
+}
+.fv-play{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  border:0.5px solid var(--accent-border);background:var(--accent-dim);
+  color:var(--accent);font-size:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.fv-play:hover{background:var(--accent);color:#0D0D0F}
+.fv-track{
+  flex:1;height:3px;background:rgba(255,255,255,0.08);
+  border-radius:100px;cursor:pointer;position:relative;
+}
+.fv-fill{
+  height:100%;background:var(--accent);border-radius:100px;
+  width:0%;pointer-events:none;
+}
+.fv-time{
+  font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--muted);white-space:nowrap;flex-shrink:0;
+}
+.fv-expand{
+  width:26px;height:26px;border-radius:6px;flex-shrink:0;
+  border:0.5px solid var(--border);background:transparent;
+  color:var(--muted);font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.fv-expand:hover{border-color:var(--accent-border);color:var(--accent)}
+
+/* ── VIDEO MODAL ── */
+.video-modal{
+  position:fixed;inset:0;z-index:1000;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.92);
+  padding:24px;
+}
+.video-modal.open{display:flex}
+.video-modal-inner{
+  position:relative;
+  width:100%;max-width:960px;
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:20px;overflow:hidden;
+}
+.video-modal-chrome{
+  background:var(--panel2);border-bottom:0.5px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:8px;
+}
+.video-modal-label{
+  font-family:'Space Mono',monospace;font-size:11px;
+  color:var(--muted);letter-spacing:.07em;flex:1;
+}
+.video-modal-close{
+  width:28px;height:28px;border-radius:50%;
+  border:0.5px solid var(--border);background:transparent;
+  color:var(--muted);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.video-modal-close:hover{border-color:rgba(255,95,87,.5);color:#ff5f57}
+.video-modal video{
+  width:100%;max-height:80vh;object-fit:contain;display:block;background:#000;
+}
+.video-modal-ctrl{
+  padding:12px 16px;border-top:0.5px solid var(--border);
+  background:var(--panel2);display:flex;align-items:center;gap:10px;
+}
+.vm-play{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  border:0.5px solid var(--accent-border);background:var(--accent-dim);
+  color:var(--accent);font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.vm-play:hover{background:var(--accent);color:#0D0D0F}
+.vm-track{
+  flex:1;height:4px;background:rgba(255,255,255,0.08);
+  border-radius:100px;cursor:pointer;position:relative;
+}
+.vm-fill{height:100%;background:var(--accent);border-radius:100px;width:0%;pointer-events:none}
+.vm-time{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+
+/* ── ARCHITECTURE ── */
+.arch-grid{
+  display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:start;
+}
+.arch-flow{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:16px;padding:32px;
+}
+.arch-flow-title{
+  font-size:12px;font-weight:500;color:var(--accent);
+  margin-bottom:24px;letter-spacing:.05em;font-family:'Space Mono',monospace;
+}
+.arch-node{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;margin-bottom:4px;
+  background:var(--panel2);border:0.5px solid var(--border);
+  border-radius:8px;font-size:12px;
+  transition:border-color .2s;
+}
+.arch-node:hover{border-color:var(--accent-border)}
+.arch-node-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.arch-node-text{flex:1;color:var(--text)}
+.arch-node-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.arch-arrow{
+  width:1px;height:20px;
+  background:linear-gradient(var(--border),var(--accent));
+  margin:0 0 4px 19px;opacity:.5;
+}
+.arch-outputs{display:flex;flex-direction:column;gap:16px}
+.arch-out{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:12px;padding:20px;transition:border-color .2s;
+}
+.arch-out:hover{border-color:var(--border-hover)}
+.arch-out-icon{font-size:20px;margin-bottom:10px}
+.arch-out-title{font-size:14px;font-weight:700;margin-bottom:6px}
+.arch-out-desc{font-size:12px;color:var(--muted);line-height:1.8}
+
+/* ── TECH STACK ── */
+.tech-grid{
+  display:flex;flex-wrap:wrap;gap:12px;
+}
+.tech-badge{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 18px;border-radius:10px;
+  border:0.5px solid var(--border);
+  background:var(--panel);font-size:13px;
+  transition:all .2s;cursor:default;
+}
+.tech-badge:hover{border-color:var(--accent-border);color:var(--accent)}
+.tech-badge-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;
+}
+.tech-label{font-size:11px;color:var(--muted);letter-spacing:.05em}
+
+/* ── DASHBOARD DEMO ── */
+.dash-demo{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:20px;overflow:hidden;margin-top:0;
+}
+.dash-bar{
+  background:var(--panel2);border-bottom:0.5px solid var(--border);
+  padding:12px 20px;display:flex;align-items:center;gap:8px;
+}
+.dash-dot{width:9px;height:9px;border-radius:50%}
+.dash-title-bar{
+  font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--muted);
+  margin-left:auto;letter-spacing:.07em;
+}
+.dash-inner{
+  display:grid;grid-template-columns:260px 1fr 220px;
+  min-height:400px;
+}
+.dash-col{
+  padding:20px;
+}
+.dash-col+.dash-col{border-left:0.5px solid var(--border)}
+.dash-col-title{
+  font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--muted);
+  letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:14px;
+}
+.brief-bubble{
+  background:var(--panel2);border:0.5px solid var(--border);
+  border-radius:10px;padding:14px;margin-bottom:10px;
+}
+.brief-label{
+  font-size:10px;color:var(--accent);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:6px;
+  font-family:'Space Mono',monospace;
+}
+.brief-text{font-size:12px;color:var(--muted);line-height:1.8}
+.brief-text strong{color:var(--text);font-weight:500}
+.alert-bubble{
+  background:rgba(255,184,0,.05);
+  border:0.5px solid rgba(255,184,0,.2);
+  border-radius:10px;padding:14px;margin-bottom:10px;
+}
+.alert-label{
+  font-size:10px;color:#ffb800;letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:8px;
+  font-family:'Space Mono',monospace;
+}
+.alert-row{
+  font-size:12px;color:var(--muted);padding:2px 0;
+}
+.alert-name{color:var(--text);font-weight:500}
+.alert-days{color:#ffb800}
+.free-day{
+  font-size:11px;color:var(--accent);
+  font-family:'Space Mono',monospace;padding:2px 0;
+}
+#netCanvas{width:100%;height:100%;min-height:320px;display:block}
+.stat-img-wrap{
+  border-radius:8px;overflow:hidden;margin-bottom:10px;
+}
+.stat-img-wrap img{width:100%;display:block}
+
+/* ── FOOTER ── */
+footer{
+  position:relative;z-index:1;
+  padding:80px 0 60px;
+  border-top:0.5px solid var(--border);
+  text-align:center;
+}
+.footer-logo{
+  font-family:'Space Mono',monospace;
+  font-size:32px;font-weight:700;
+  color:var(--accent);margin-bottom:16px;
+  letter-spacing:-.02em;
+}
+.footer-sub{
+  font-size:13px;color:var(--muted);line-height:2;
+}
+.footer-tech{
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+  margin-top:24px;
+}
+.footer-badge{
+  font-family:'Space Mono',monospace;font-size:10px;
+  padding:4px 12px;border:0.5px solid var(--border);
+  border-radius:100px;color:var(--muted);
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.7}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:0 20px}
+  .nav-links,.nav-badge{display:none}
+  .container{padding:0 20px}
+  section{padding:80px 0}
+  .problem-grid,.arch-grid{grid-template-columns:1fr}
+  .feat-section{grid-template-columns:1fr;gap:32px}
+  .feat-section.reverse{direction:ltr}
+  .dash-inner{grid-template-columns:1fr}
+  .dash-col+.dash-col{border-left:none;border-top:0.5px solid var(--border)}
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-icon">👣</div>
+    FOOTPRINTS
+  </a>
+  <ul class="nav-links">
+    <li><a href="#problem">문제 정의</a></li>
+    <li><a href="#features">핵심 기능</a></li>
+    <li><a href="#architecture">아키텍처</a></li>
+    <li><a href="#demo">데모</a></li>
+    <li><a href="#stack">기술 스택</a></li>
+  </ul>
+  <div class="nav-badge">HAI 26-1 · 김민규</div>
+</nav>
+
+<!-- ── VIDEO MODAL ── -->
+<div class="video-modal" id="video-modal">
+  <div class="video-modal-inner">
+    <div class="video-modal-chrome">
+      <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+      <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+      <div class="feat-chrome-dot" style="background:#28c840"></div>
+      <span class="video-modal-label" id="modal-label"></span>
+      <button class="video-modal-close" id="modal-close">✕</button>
+    </div>
+    <video id="modal-video" muted playsinline style="width:100%;max-height:80vh;object-fit:contain;display:block;background:#000"></video>
+    <div class="video-modal-ctrl">
+      <button class="vm-play" id="vm-play">⏸</button>
+      <div class="vm-track" id="vm-track"><div class="vm-fill" id="vm-fill"></div></div>
+      <span class="vm-time" id="vm-time">0:00 / 0:00</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <span class="hero-eyebrow">나의 로드 매니저 · Human-AI Interaction</span>
+  <h1 class="hero-title">
+    <span class="accent">발자국</span>
+  </h1>
+  <p class="hero-subtitle">
+    폰만 들고 다니면 추억이 쌓인다.<br>
+    구글 캘린더 · GPS · 카카오톡을 교차 분석해<br>
+    인간관계를 자동으로 기록하고 브리핑하는 AI 관계 비서.
+  </p>
+  <div class="hero-chips">
+    <span class="chip on">Google Calendar</span>
+    <span class="chip on">GPS 자동 기록</span>
+    <span class="chip on">KakaoTalk 크롤링</span>
+    <span class="chip on">관계별자리 3D</span>
+    <span class="chip">Zero-UI</span>
+    <span class="chip">AI 매니저 브리핑</span>
+  </div>
+  <div class="hero-scroll">SCROLL</div>
+</div>
+
+<!-- ── 01 PROBLEM ── -->
+<section id="problem">
+  <div class="container">
+    <span class="sec-label reveal">01 — 문제 정의</span>
+    <h2 class="sec-title reveal">왜 관계가 흐릿해지는가</h2>
+    <p class="sec-desc reveal">
+      마음은 있는데, 기억이 없다.<br>
+      바쁜 일상에서 소중한 사람을 잊어버리는 건 게으름이 아니라 시스템의 부재다.
+    </p>
+    <div class="problem-grid">
+      <div class="prob-card reveal">
+        <div class="prob-card-num">PROBLEM 01</div>
+        <div class="prob-card-q">"이 친구 마지막으로 언제 봤더라?"</div>
+        <div class="prob-card-a">만남의 기억은 빠르게 흐릿해진다. 직접 기록하지 않으면, 그 소중한 순간은 기억 속에서 날짜도 없이 사라진다.</div>
+      </div>
+      <div class="prob-card reveal">
+        <div class="prob-card-num">PROBLEM 02</div>
+        <div class="prob-card-q">수동 기록은 결국 안 하게 된다</div>
+        <div class="prob-card-a">일기앱, 메모, 노션 — 어느 것도 꾸준히 지속되지 않는다. 입력이 귀찮은 순간, 모든 기록 시스템은 무너진다.</div>
+      </div>
+      <div class="prob-card reveal">
+        <div class="prob-card-num">PROBLEM 03</div>
+        <div class="prob-card-q">카톡은 하지만, 실제로 만난 건 아니다</div>
+        <div class="prob-card-a">카카오톡 연락과 오프라인 만남은 다르다. 둘을 구분하지 못하면, 관계의 실제 온도를 잘못 파악하게 된다.</div>
+      </div>
+      <div class="prob-card reveal">
+        <div class="prob-card-num">SOLUTION</div>
+        <div class="prob-card-q">아무것도 안 해도 기록된다</div>
+        <div class="prob-card-a">발자국은 사용자가 아무것도 하지 않아도 데이터가 쌓인다. 구글 캘린더 + GPS + 카카오톡이 알아서 관계를 추적한다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 02 FEATURES (SCROLL SECTIONS) ── -->
+<section id="features">
+  <div class="container">
+    <span class="sec-label reveal">02 — 핵심 기능</span>
+    <h2 class="sec-title reveal">어떻게 작동하는가</h2>
+    <p class="sec-desc reveal">
+      6가지 핵심 기능을 직접 눈으로 확인해보세요.
+    </p>
+
+    <!-- F1: 새로고침 -->
+    <div class="feat-section reveal">
+      <div class="feat-section-media">
+        <div class="feat-section-chrome">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="feat-chrome-label">새로고침.mov</span>
+        </div>
+        <video class="feat-section-video fv-video" autoplay muted loop playsinline
+          src="assets/새로고침.mov"></video>
+        <div class="feat-video-ctrl">
+          <button class="fv-play">⏸</button>
+          <div class="fv-track"><div class="fv-fill"></div></div>
+          <span class="fv-time">0:00 / 0:00</span>
+          <button class="fv-expand" title="크게 보기">⛶</button>
+        </div>
+      </div>
+      <div class="feat-section-info">
+        <span class="feat-num">FEATURE 01</span>
+        <h3 class="feat-section-title">원터치 새로고침</h3>
+        <p class="feat-section-desc">버튼 하나면 끝. 구글 캘린더 · GPS · 카카오톡 데이터를 동시에 불러와 발자국을 자동으로 갱신한다. 사용자가 직접 입력할 게 없다.</p>
+        <span class="feat-section-tag">ZERO-INPUT</span>
+        <div class="feat-section-bullets">
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>구글 캘린더에서 새 만남 일정 자동 추출</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>GPS 기록과 교차 검증 → 실제 만남만 발자국으로</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>Open-Meteo로 날씨까지 자동 태깅</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- F2: 카카오 크롤링 -->
+    <div class="feat-section reverse reveal">
+      <div class="feat-section-media">
+        <div class="feat-section-chrome">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="feat-chrome-label">카카오크롤링.mov</span>
+        </div>
+        <video class="feat-section-video fv-video" autoplay muted loop playsinline
+          src="assets/카카오크롤링_1.mov"></video>
+        <div class="feat-video-ctrl">
+          <button class="fv-play">⏸</button>
+          <div class="fv-track"><div class="fv-fill"></div></div>
+          <span class="fv-time">0:00 / 0:00</span>
+          <button class="fv-expand" title="크게 보기">⛶</button>
+        </div>
+      </div>
+      <div class="feat-section-info">
+        <span class="feat-num">FEATURE 02</span>
+        <h3 class="feat-section-title">카카오톡 자동 크롤링</h3>
+        <p class="feat-section-desc">자정에 자동 실행. macOS Accessibility API(osascript)로 카카오톡 채팅방 목록을 읽어온다. 대화 내용은 일절 수집하지 않는다 — 채팅방 이름과 마지막 연락 날짜만.</p>
+        <span class="feat-section-tag">PRIVACY-FIRST</span>
+        <div class="feat-section-bullets">
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>채팅방 이름 + 마지막 연락일만 추적</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>"만났는데 연락 없는 친구" vs "연락은 하지만 못 만난 친구" 구분</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>자정 자동 실행 — 사용자 개입 불필요</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- F3: 관계별자리 2D -->
+    <div class="feat-section reveal">
+      <div class="feat-section-media">
+        <div class="feat-section-chrome">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="feat-chrome-label">관계별자리 2D.mov</span>
+        </div>
+        <video class="feat-section-video fv-video" autoplay muted loop playsinline
+          src="assets/관계별자리 2D.mov"></video>
+        <div class="feat-video-ctrl">
+          <button class="fv-play">⏸</button>
+          <div class="fv-track"><div class="fv-fill"></div></div>
+          <span class="fv-time">0:00 / 0:00</span>
+          <button class="fv-expand" title="크게 보기">⛶</button>
+        </div>
+      </div>
+      <div class="feat-section-info">
+        <span class="feat-num">FEATURE 03</span>
+        <h3 class="feat-section-title">관계별자리 2D</h3>
+        <p class="feat-section-desc">친밀도·만남 빈도로 거리와 크기가 결정되는 별자리 지도. 나를 중심에 두고, 자주 만날수록 가깝고 크게 표시된다. 같은 모임의 친구들은 점선으로 연결.</p>
+        <span class="feat-section-tag">CONSTELLATION MAP</span>
+        <div class="feat-section-bullets">
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>친밀도 점수 = 만남 × 0.5 + 연락 × 0.5</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>같은 그룹(동아리·학교·직장) 친구 점선 연결</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>별 크기 = 친밀도, 거리 = 최근성</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- F4: 관계별자리 3D -->
+    <div class="feat-section reverse reveal">
+      <div class="feat-section-media">
+        <div class="feat-section-chrome">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="feat-chrome-label">관계별자리 3D.mov</span>
+        </div>
+        <video class="feat-section-video fv-video" autoplay muted loop playsinline
+          src="assets/관계별자리 3D.mov"></video>
+        <div class="feat-video-ctrl">
+          <button class="fv-play">⏸</button>
+          <div class="fv-track"><div class="fv-fill"></div></div>
+          <span class="fv-time">0:00 / 0:00</span>
+          <button class="fv-expand" title="크게 보기">⛶</button>
+        </div>
+      </div>
+      <div class="feat-section-info">
+        <span class="feat-num">FEATURE 04</span>
+        <h3 class="feat-section-title">관계별자리 3D</h3>
+        <p class="feat-section-desc">Three.js 기반 인터랙티브 3D 별자리. 마우스로 회전하고 줌할 수 있다. 2D로 보이지 않던 관계의 층위가 입체적으로 드러난다.</p>
+        <span class="feat-section-tag">THREE.JS</span>
+        <div class="feat-section-bullets">
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>마우스 드래그로 360° 회전</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>줌인·아웃으로 세부 관계 탐색</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>별자리 클릭 → 친구 프로필 바로 열기</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- F5: 친구연결 -->
+    <div class="feat-section reveal">
+      <div class="feat-section-media">
+        <div class="feat-section-chrome">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="feat-chrome-label">친구연결.mov</span>
+        </div>
+        <video class="feat-section-video fv-video" autoplay muted loop playsinline
+          src="assets/친구연결.mov"></video>
+        <div class="feat-video-ctrl">
+          <button class="fv-play">⏸</button>
+          <div class="fv-track"><div class="fv-fill"></div></div>
+          <span class="fv-time">0:00 / 0:00</span>
+          <button class="fv-expand" title="크게 보기">⛶</button>
+        </div>
+      </div>
+      <div class="feat-section-info">
+        <span class="feat-num">FEATURE 05</span>
+        <h3 class="feat-section-title">친구 연결</h3>
+        <p class="feat-section-desc">카카오톡 채팅방 이름을 앱 속 친구 프로필에 자동으로 매핑한다. "마지막 만남"과 "마지막 연락"을 분리 표시해 관계의 실제 온도를 보여준다.</p>
+        <span class="feat-section-tag">SMART MATCHING</span>
+        <div class="feat-section-bullets">
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>카카오톡 이름 → 친구 프로필 자동 연결</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>🗓️ 마지막 만남 / 💬 마지막 연락 분리 표시</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>인사이트: "만났는데 연락 없는 친구" 자동 감지</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- F6: 통계 -->
+    <div class="feat-section reverse reveal">
+      <div class="feat-section-media">
+        <div class="feat-section-chrome">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="feat-chrome-label">통계.mov</span>
+        </div>
+        <video class="feat-section-video fv-video" autoplay muted loop playsinline
+          src="assets/통계.mov"></video>
+        <div class="feat-video-ctrl">
+          <button class="fv-play">⏸</button>
+          <div class="fv-track"><div class="fv-fill"></div></div>
+          <span class="fv-time">0:00 / 0:00</span>
+          <button class="fv-expand" title="크게 보기">⛶</button>
+        </div>
+      </div>
+      <div class="feat-section-info">
+        <span class="feat-num">FEATURE 06</span>
+        <h3 class="feat-section-title">통계 & 인사이트</h3>
+        <p class="feat-section-desc">날씨별 만남 패턴 도넛 차트, 친구별 타임라인, 날씨 × 친구 교차 분석. 숫자로 보는 내 관계의 패턴 — "비 오는 날 자주 만나는 사람"을 데이터로 발견한다.</p>
+        <span class="feat-section-tag">DATA VIZ</span>
+        <div class="feat-section-bullets">
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>날씨별 만남 빈도 도넛 차트</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>날씨 × 친구 교차 분석 히트맵</span></div>
+          <div class="feat-bullet"><div class="feat-bullet-dot"></div><span>월별 만남 빈도 바 차트 + 친구별 타임라인</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── 03 ARCHITECTURE ── -->
+<section id="architecture">
+  <div class="container">
+    <span class="sec-label reveal">03 — 시스템 아키텍처</span>
+    <h2 class="sec-title reveal">데이터에서 브리핑까지</h2>
+    <p class="sec-desc reveal">4개의 데이터 소스가 Supabase DB를 거쳐 하나의 관계 지도로 합쳐진다.</p>
+    <div class="arch-grid">
+      <div class="arch-flow reveal">
+        <div class="arch-flow-title">▸ DATA PIPELINE</div>
+
+        <div class="arch-node">
+          <div class="arch-node-dot" style="background:#4a9eff"></div>
+          <div>
+            <div class="arch-node-text">Google Calendar OAuth</div>
+            <div class="arch-node-sub">일정 키워드 추출 → 만남 후보 수집</div>
+          </div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-dot" style="background:#4a9eff"></div>
+          <div>
+            <div class="arch-node-text">GPS 체크인 (Expo)</div>
+            <div class="arch-node-sub">현재 위치 → 카카오 지도 역지오코딩</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-node" style="border-color:rgba(0,255,194,.3)">
+          <div class="arch-node-dot" style="background:var(--accent)"></div>
+          <div>
+            <div class="arch-node-text" style="color:var(--accent)">FootPrints Logic</div>
+            <div class="arch-node-sub">캘린더 + GPS 일치 → 만남 발자국 자동 생성</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-node">
+          <div class="arch-node-dot" style="background:#c77dff"></div>
+          <div>
+            <div class="arch-node-text">KakaoTalk 크롤링</div>
+            <div class="arch-node-sub">채팅방 이름 + 마지막 연락일만 수집</div>
+          </div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-dot" style="background:#22c55e"></div>
+          <div>
+            <div class="arch-node-text">Open-Meteo API</div>
+            <div class="arch-node-sub">날씨 자동 태깅 (무료, API 키 불필요)</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-node" style="border-color:rgba(255,184,0,.35)">
+          <div class="arch-node-dot" style="background:#ffb800"></div>
+          <div>
+            <div class="arch-node-text" style="color:#ffb800">Supabase DB</div>
+            <div class="arch-node-sub">friends / meetings / contact_footprints / calendar_events</div>
+          </div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-node" style="border-color:rgba(0,255,194,.35)">
+          <div class="arch-node-dot" style="background:var(--accent)"></div>
+          <div>
+            <div class="arch-node-text" style="color:var(--accent)">AI 매니저 브리핑 + 관계별자리</div>
+            <div class="arch-node-sub">최종 아웃풋 — 매일 아침 자동 생성</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-outputs reveal">
+        <div class="arch-out">
+          <div class="arch-out-icon">🌌</div>
+          <div class="arch-out-title">관계별자리</div>
+          <div class="arch-out-desc">친밀도 점수 기반 네트워크 그래프. 가까운 사람일수록 거리가 가깝고 별이 크다. Three.js 인터랙티브 3D.</div>
+        </div>
+        <div class="arch-out" style="border-color:rgba(255,184,0,.2)">
+          <div class="arch-out-icon">⚠️</div>
+          <div class="arch-out-title">멀어진 인연 알림</div>
+          <div class="arch-out-desc">친밀도 점수가 임계값 이하로 떨어지면 자동 알림. "이 친구와 30일째 연락이 없어요."</div>
+        </div>
+        <div class="arch-out" style="border-color:rgba(0,255,194,.15)">
+          <div class="arch-out-icon">📅</div>
+          <div class="arch-out-title">빈 날짜 + 날씨 추천</div>
+          <div class="arch-out-desc">일정 없는 날 중 날씨가 좋은 날짜를 골라 연락하기 좋은 날을 제안한다.</div>
+        </div>
+        <div class="arch-out">
+          <div class="arch-out-icon">💬</div>
+          <div class="arch-out-title">첫 메시지 초안</div>
+          <div class="arch-out-desc">맥락을 파악한 AI가 소홀한 관계에게 자연스러운 첫 메시지를 작성해준다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 04 DEMO ── -->
+<section id="demo">
+  <div class="container">
+    <span class="sec-label reveal">04 — 실제 화면</span>
+    <h2 class="sec-title reveal">발자국 대시보드</h2>
+    <p class="sec-desc reveal">AI 매니저 브리핑 · 관계별자리 · 연락 발자국이 하나의 화면에.</p>
+
+    <!-- 세로형 2장: 브리핑(858×1212) + 관계별자리(772×984) -->
+    <div class="reveal" style="display:grid;grid-template-columns:858fr 772fr;gap:20px;margin-bottom:20px;align-items:start">
+
+      <!-- 브리핑 (0.71 세로) -->
+      <div style="background:var(--panel);border:0.5px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="padding:12px 18px;border-bottom:0.5px solid var(--border);
+             font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em">
+          AI 매니저 브리핑
+        </div>
+        <!-- aspect-ratio 858/1212 ≈ 0.7079 -->
+        <div style="aspect-ratio:858/1212;width:100%;overflow:hidden">
+          <img src="assets/발자국매니저 브리핑 이미지.png" alt="AI 매니저 브리핑"
+               style="width:100%;height:100%;object-fit:contain;display:block">
+        </div>
+      </div>
+
+      <!-- 관계별자리 (0.78 세로) -->
+      <div style="background:var(--panel);border:0.5px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="padding:12px 18px;border-bottom:0.5px solid var(--border);
+             font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em">
+          관계별자리 MAP
+        </div>
+        <!-- aspect-ratio 772/984 ≈ 0.7846 -->
+        <div style="aspect-ratio:772/984;width:100%;overflow:hidden">
+          <img src="assets/관계별자리 이미지.png" alt="관계별자리"
+               style="width:100%;height:100%;object-fit:contain;display:block">
+        </div>
+      </div>
+    </div>
+
+    <!-- 가로형 1장: 히트맵 (718×444, ratio 1.62) -->
+    <div class="reveal" style="background:var(--panel);border:0.5px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px">
+      <div style="padding:12px 18px;border-bottom:0.5px solid var(--border);
+           font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em">
+        연락 발자국 히트맵 — 카카오톡 연락 빈도 시각화
+      </div>
+      <!-- aspect-ratio 718/444 ≈ 1.617, 60% width centered -->
+      <div style="aspect-ratio:718/444;width:60%;margin:0 auto;overflow:hidden">
+        <img src="assets/연락발자국 히트맵이지미.png" alt="연락발자국 히트맵"
+             style="width:100%;height:100%;object-fit:contain;display:block">
+      </div>
+    </div>
+
+    <!-- 대시보드 인터랙티브 -->
+    <div class="dash-demo reveal">
+      <div class="dash-bar">
+        <div class="dash-dot" style="background:#ff5f57"></div>
+        <div class="dash-dot" style="background:#ffbd2e"></div>
+        <div class="dash-dot" style="background:#28c840"></div>
+        <span class="dash-title-bar">나의 발자국 매니저 · 2026.04.29</span>
+      </div>
+      <div class="dash-inner">
+        <!-- AI 브리핑 -->
+        <div class="dash-col">
+          <div class="dash-col-title">AI 매니저 브리핑</div>
+          <div class="brief-bubble">
+            <div class="brief-label">📋 이번 주</div>
+            <div class="brief-text">
+              총 만남 <strong>7회</strong><br>
+              가장 많이 만난 <strong>김대환 (3회)</strong><br>
+              주로 머문 곳 <strong>반포한강공원</strong>
+            </div>
+          </div>
+          <div class="alert-bubble">
+            <div class="alert-label">⚠️ 멀어진 인연들</div>
+            <div class="alert-row"><span class="alert-name">김준영</span> — <span class="alert-days">30일 전</span></div>
+            <div class="alert-row"><span class="alert-name">주태양</span> — <span class="alert-days">38일 전</span></div>
+          </div>
+          <div class="brief-bubble">
+            <div class="brief-label">📅 빈 날짜 추천</div>
+            <div class="free-day">04-30 (목) ☀️ 맑음</div>
+            <div class="free-day">05-02 (토) ⛅ 구름조금</div>
+            <div class="free-day">05-05 (화) ☀️ 맑음</div>
+          </div>
+        </div>
+        <!-- 관계별자리 -->
+        <div class="dash-col" style="padding:14px">
+          <div class="dash-col-title" style="padding:6px 6px 0">관계별자리</div>
+          <canvas id="netCanvas"></canvas>
+        </div>
+        <!-- 통계 -->
+        <div class="dash-col">
+          <div class="dash-col-title">만남 인사이트</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">날씨 × 만남 패턴</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:13px">☀️</span>
+              <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:62%;background:var(--accent);border-radius:100px"></div>
+              </div>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">62%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:13px">⛅</span>
+              <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:24%;background:#6B7280;border-radius:100px"></div>
+              </div>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">24%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:13px">🌧️</span>
+              <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:14%;background:#4a9eff;border-radius:100px"></div>
+              </div>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">14%</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">이번 달 만남 TOP 5</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <span style="color:var(--text);font-weight:500;width:46px">김대환</span>
+              <div style="flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:100%;background:var(--accent);border-radius:100px"></div>
+              </div>
+              <span style="color:var(--muted);font-family:'Space Mono',monospace">3회</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <span style="color:var(--text);font-weight:500;width:46px">강주연</span>
+              <div style="flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:80%;background:var(--accent);border-radius:100px"></div>
+              </div>
+              <span style="color:var(--muted);font-family:'Space Mono',monospace">2회</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <span style="color:var(--text);font-weight:500;width:46px">신지훈</span>
+              <div style="flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:60%;background:var(--accent);border-radius:100px"></div>
+              </div>
+              <span style="color:var(--muted);font-family:'Space Mono',monospace">2회</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <span style="color:var(--text);font-weight:500;width:46px">한예주</span>
+              <div style="flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:40%;background:#6B7280;border-radius:100px"></div>
+              </div>
+              <span style="color:var(--muted);font-family:'Space Mono',monospace">1회</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px">
+              <span style="color:var(--text);font-weight:500;width:46px">성은영</span>
+              <div style="flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden">
+                <div style="height:100%;width:40%;background:#6B7280;border-radius:100px"></div>
+              </div>
+              <span style="color:var(--muted);font-family:'Space Mono',monospace">1회</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 05 STACK ── -->
+<section id="stack">
+  <div class="container">
+    <span class="sec-label reveal">05 — 기술 스택</span>
+    <h2 class="sec-title reveal">어떻게 만들었는가</h2>
+    <p class="sec-desc reveal">최소한의 스택으로 최대한의 자동화를 구현했다.</p>
+    <div class="tech-grid reveal">
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>Next.js 14</div><div class="tech-label">App Router · TypeScript</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>Supabase</div><div class="tech-label">PostgreSQL · Realtime</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>NextAuth</div><div class="tech-label">Google OAuth 2.0</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>Three.js</div><div class="tech-label">관계별자리 3D</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>Kakao Maps API</div><div class="tech-label">역지오코딩</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>Open-Meteo API</div><div class="tech-label">날씨 자동 태깅 · 무료</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>osascript</div><div class="tech-label">macOS Accessibility API</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>Expo (Phase 2)</div><div class="tech-label">React Native · expo-location</div></div></div>
+      <div class="tech-badge"><div class="tech-badge-dot"></div><div><div>Pretendard Variable</div><div class="tech-label">한글 최적화 폰트</div></div></div>
+    </div>
+
+    <!-- DB Schema -->
+    <div style="margin-top:56px" class="reveal">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.14em;margin-bottom:16px">DATABASE SCHEMA</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="background:var(--panel);border:0.5px solid var(--border);border-radius:10px;padding:18px">
+          <div style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:10px">friends</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2;font-family:'Space Mono',monospace">id, name, intimacy_score<br>last_met, last_contact<br>kakao_room_name</div>
+        </div>
+        <div style="background:var(--panel);border:0.5px solid var(--border);border-radius:10px;padding:18px">
+          <div style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:10px">meetings</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2;font-family:'Space Mono',monospace">id, friend_id, date<br>location, weather<br>lat, lng, source</div>
+        </div>
+        <div style="background:var(--panel);border:0.5px solid var(--border);border-radius:10px;padding:18px">
+          <div style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:10px">contact_footprints</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2;font-family:'Space Mono',monospace">id, friend_id<br>last_contact_at<br>kakao_room_name</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <div class="footer-logo">👣 발자국</div>
+    <div class="footer-sub">
+      나의 로드 매니저 — 소홀해진 관계 관리 에이전트<br>
+      인간-AI 상호작용 이론 및 실습 · 2026-1학기 · 김민규
+    </div>
+    <div class="footer-tech">
+      <span class="footer-badge">Next.js 14</span>
+      <span class="footer-badge">Supabase</span>
+      <span class="footer-badge">Kakao API</span>
+      <span class="footer-badge">Three.js</span>
+      <span class="footer-badge">Open-Meteo</span>
+      <span class="footer-badge">osascript</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ─────────────────────────────────────────
+   STARS CANVAS
+───────────────────────────────────────── */
+(function(){
+  const c = document.getElementById('stars-canvas');
+  const ctx = c.getContext('2d');
+  let stars = [];
+
+  function resize(){
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+    stars = [];
+    for(let i = 0; i < 120; i++){
+      stars.push({
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        r: Math.random() * 1.2 + 0.3,
+        a: Math.random(),
+        speed: Math.random() * 0.003 + 0.001,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  let frame = 0;
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    frame++;
+    stars.forEach(s => {
+      const alpha = s.a * (0.4 + 0.3 * Math.sin(frame * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,255,194,${alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+
+/* ─────────────────────────────────────────
+   SCROLL REVEAL
+───────────────────────────────────────── */
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) e.target.classList.add('visible');
+  });
+}, {threshold: 0.12});
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+/* ─────────────────────────────────────────
+   NAV ACTIVE SECTION HIGHLIGHT
+───────────────────────────────────────── */
+(function(){
+  const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+  const sections = Array.from(navLinks).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+
+  const sectionObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(!e.isIntersecting) return;
+      const id = e.target.id;
+      navLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+    });
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+
+  sections.forEach(s => sectionObs.observe(s));
+})();
+
+/* ─────────────────────────────────────────
+   PER-VIDEO CONTROLS
+───────────────────────────────────────── */
+function fmt(s){
+  if(!isFinite(s)) return '0:00';
+  const m = Math.floor(s/60);
+  const sec = Math.floor(s%60);
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+document.querySelectorAll('.feat-section-media').forEach(wrap => {
+  const video = wrap.querySelector('.fv-video');
+  const ctrl  = wrap.querySelector('.feat-video-ctrl');
+  if(!video || !ctrl) return;
+
+  const playBtn = ctrl.querySelector('.fv-play');
+  const track   = ctrl.querySelector('.fv-track');
+  const fill    = ctrl.querySelector('.fv-fill');
+  const timeEl  = ctrl.querySelector('.fv-time');
+
+  // update progress bar
+  video.addEventListener('timeupdate', () => {
+    if(!video.duration) return;
+    const pct = video.currentTime / video.duration * 100;
+    fill.style.width = pct + '%';
+    timeEl.textContent = `${fmt(video.currentTime)} / ${fmt(video.duration)}`;
+  });
+
+  // play / pause toggle
+  playBtn.addEventListener('click', () => {
+    if(video.paused){ video.play(); playBtn.textContent = '⏸'; }
+    else { video.pause(); playBtn.textContent = '▶'; }
+  });
+  video.addEventListener('play',  () => { playBtn.textContent = '⏸'; });
+  video.addEventListener('pause', () => { playBtn.textContent = '▶'; });
+
+  // seek on track click
+  function seek(e){
+    const rect = track.getBoundingClientRect();
+    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    if(video.duration) video.currentTime = pct * video.duration;
+  }
+  let dragging = false;
+  track.addEventListener('mousedown', e => { dragging = true; seek(e); });
+  document.addEventListener('mousemove', e => { if(dragging) seek(e); });
+  document.addEventListener('mouseup',   () => { dragging = false; });
+  track.addEventListener('click', seek);
+
+  // expand button
+  const expandBtn = ctrl.querySelector('.fv-expand');
+  if(expandBtn){
+    expandBtn.addEventListener('click', () => openModal(video));
+  }
+});
+
+/* ─────────────────────────────────────────
+   VIDEO MODAL
+───────────────────────────────────────── */
+(function(){
+  const modal     = document.getElementById('video-modal');
+  const modalVid  = document.getElementById('modal-video');
+  const modalLabel= document.getElementById('modal-label');
+  const closeBtn  = document.getElementById('modal-close');
+  const vmPlay    = document.getElementById('vm-play');
+  const vmTrack   = document.getElementById('vm-track');
+  const vmFill    = document.getElementById('vm-fill');
+  const vmTime    = document.getElementById('vm-time');
+
+  window.openModal = function(sourceVideo){
+    const label = sourceVideo.closest('.feat-section-media')
+                    ?.querySelector('.feat-chrome-label')?.textContent || '';
+    modalLabel.textContent = label;
+    modalVid.src = sourceVideo.src;
+    modalVid.currentTime = sourceVideo.currentTime;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    modalVid.play().catch(()=>{});
+  };
+
+  function closeModal(){
+    modalVid.pause();
+    modalVid.src = '';
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  modalVid.addEventListener('timeupdate', () => {
+    if(!modalVid.duration) return;
+    const pct = modalVid.currentTime / modalVid.duration * 100;
+    vmFill.style.width = pct + '%';
+    vmTime.textContent = `${fmt(modalVid.currentTime)} / ${fmt(modalVid.duration)}`;
+  });
+
+  vmPlay.addEventListener('click', () => {
+    if(modalVid.paused){ modalVid.play(); vmPlay.textContent = '⏸'; }
+    else { modalVid.pause(); vmPlay.textContent = '▶'; }
+  });
+  modalVid.addEventListener('play',  () => { vmPlay.textContent = '⏸'; });
+  modalVid.addEventListener('pause', () => { vmPlay.textContent = '▶'; });
+
+  let vmDrag = false;
+  function vmSeek(e){
+    const rect = vmTrack.getBoundingClientRect();
+    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    if(modalVid.duration) modalVid.currentTime = pct * modalVid.duration;
+  }
+  vmTrack.addEventListener('mousedown', e => { vmDrag = true; vmSeek(e); });
+  document.addEventListener('mousemove', e => { if(vmDrag) vmSeek(e); });
+  document.addEventListener('mouseup',   () => { vmDrag = false; });
+  vmTrack.addEventListener('click', vmSeek);
+})();
+
+/* ─────────────────────────────────────────
+   NETWORK CANVAS (CONSTELLATION)
+───────────────────────────────────────── */
+(function(){
+  const canvas = document.getElementById('netCanvas');
+  if(!canvas) return;
+  const PR = window.devicePixelRatio || 1;
+
+  const people = [
+    {name:'나',    color:'#00FFC2', size:18, angle:0,              dist:0},
+    {name:'강주연', color:'#ff6b9d', size:15, angle:Math.PI*.08,    dist:95},
+    {name:'신지훈', color:'#4a9eff', size:13, angle:Math.PI*.48,    dist:108},
+    {name:'한예주', color:'#c77dff', size:14, angle:Math.PI*.82,    dist:92},
+    {name:'신은호', color:'#00FFC2', size:12, angle:Math.PI*1.12,   dist:112},
+    {name:'성은영', color:'#ffb800', size:12, angle:Math.PI*1.42,   dist:100},
+    {name:'류한나', color:'#4a9eff', size:11, angle:Math.PI*1.72,   dist:116},
+    {name:'김세현', color:'#ff6b9d', size:11, angle:Math.PI*2.02,   dist:106},
+    {name:'김대환', color:'#c77dff', size:14, angle:Math.PI*2.3,    dist:98},
+    {name:'민경필', color:'#ffb800', size:9,  angle:Math.PI*1.56,   dist:158},
+    {name:'이현숙', color:'#4a9eff', size:8,  angle:Math.PI*.33,    dist:166},
+    {name:'문정원', color:'#ff6b9d', size:8,  angle:Math.PI*.66,    dist:172},
+  ];
+
+  let t = 0;
+
+  function setup(){
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * PR;
+    canvas.height = rect.height * PR;
+  }
+
+  function draw(){
+    setup();
+    const ctx = canvas.getContext('2d');
+    ctx.scale(PR, PR);
+    const W = canvas.width / PR;
+    const H = canvas.height / PR;
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, cy = H / 2 - 8;
+
+    people.forEach((p, i) => {
+      if(i === 0) return;
+      const wobble = Math.sin(t * 0.55 + i) * 3.5;
+      const px = cx + Math.cos(p.angle + t * 0.012) * (p.dist + wobble);
+      const py = cy + Math.sin(p.angle + t * 0.012) * (p.dist * 0.72 + wobble);
+
+      // line
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(px, py);
+      ctx.strokeStyle = p.color + '2a';
+      ctx.lineWidth = p.size * 0.07;
+      ctx.stroke();
+
+      // glow ring
+      ctx.beginPath();
+      ctx.arc(px, py, p.size / 2 + 3, 0, Math.PI * 2);
+      ctx.fillStyle = p.color + '18';
+      ctx.fill();
+
+      // dot
+      ctx.beginPath();
+      ctx.arc(px, py, p.size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = p.color + '55';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px, py, p.size / 2 - 2, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+
+      // inner letter
+      ctx.fillStyle = '#0D0D0F';
+      ctx.font = `bold ${Math.max(8, p.size * 0.65)}px 'Noto Sans KR',sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.name.slice(-1), px, py);
+
+      // name label
+      ctx.fillStyle = '#6B7280';
+      ctx.font = `${Math.max(7, p.size * 0.55)}px 'Noto Sans KR',sans-serif`;
+      ctx.fillText(p.name, px, py + p.size / 2 + 9);
+    });
+
+    // center dot (me)
+    ctx.beginPath();
+    ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+    ctx.fillStyle = '#00FFC220';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 13, 0, Math.PI * 2);
+    ctx.fillStyle = '#00FFC2';
+    ctx.fill();
+    ctx.fillStyle = '#0D0D0F';
+    ctx.font = "bold 10px 'Noto Sans KR',sans-serif";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('나', cx, cy);
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+  window.addEventListener('resize', setup);
+})();
+</script>
+</body>
+</html>

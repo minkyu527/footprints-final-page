@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>발자국 — 소홀해진 관계 관리 매니저</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#080e09;
+  --bg2:#0d160e;
+  --bg3:#111c12;
+  --teal:#00d4aa;
+  --teal2:#00f5c8;
+  --amber:#ffb800;
+  --pink:#ff6b9d;
+  --text:#e8f0e9;
+  --text2:#7a9b7d;
+  --text3:#3d5c40;
+  --border:#1a2e1c;
+  --border2:#243827;
+}
+
+html{scroll-behavior:smooth}
+
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  line-height:1.7;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--teal);opacity:.4}
+
+/* FOOTPRINT CANVAS BG */
+#fp-bg{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;opacity:.04;
+}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:64px;
+  background:rgba(8,14,9,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:0.5px solid var(--border);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Space Mono',monospace;
+  font-size:15px;letter-spacing:.04em;color:var(--teal);
+}
+.nav-logo .fp-icon{
+  width:30px;height:30px;border:1.5px solid var(--teal);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{
+  font-size:13px;color:var(--text2);text-decoration:none;
+  letter-spacing:.06em;transition:color .2s;
+}
+.nav-links a:hover{color:var(--teal)}
+.nav-tag{
+  font-family:'Space Mono',monospace;font-size:11px;
+  color:var(--text3);letter-spacing:.08em;
+}
+
+/* HERO */
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:80px 24px 60px;
+}
+.hero-eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:11px;letter-spacing:.18em;
+  color:var(--teal);text-transform:uppercase;
+  margin-bottom:28px;
+  opacity:0;animation:fadeUp .6s .2s forwards;
+}
+.hero-title{
+  font-size:clamp(52px,8vw,96px);
+  font-weight:700;line-height:1;
+  letter-spacing:-.02em;
+  margin-bottom:24px;
+  opacity:0;animation:fadeUp .7s .35s forwards;
+}
+.hero-title span{color:var(--teal)}
+.hero-sub{
+  font-size:16px;color:var(--text2);
+  max-width:520px;line-height:1.8;
+  margin-bottom:48px;
+  opacity:0;animation:fadeUp .7s .5s forwards;
+}
+.hero-chips{
+  display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
+  margin-bottom:72px;
+  opacity:0;animation:fadeUp .7s .65s forwards;
+}
+.chip{
+  padding:8px 18px;border:0.5px solid var(--border2);
+  border-radius:100px;font-size:12px;color:var(--text2);
+  background:var(--bg3);letter-spacing:.04em;
+}
+.chip.active{border-color:var(--teal);color:var(--teal);background:rgba(0,212,170,.06)}
+.hero-scroll{
+  font-size:11px;letter-spacing:.14em;color:var(--text3);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  opacity:0;animation:fadeUp .7s .8s forwards;
+}
+.hero-scroll::after{
+  content:'';width:1px;height:48px;background:linear-gradient(var(--teal),transparent);
+  animation:scroll-line 2s ease-in-out infinite;
+}
+@keyframes scroll-line{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* SECTIONS */
+section{
+  position:relative;z-index:1;
+  padding:120px 0;
+  border-top:0.5px solid var(--border);
+}
+.container{max-width:1100px;margin:0 auto;padding:0 48px}
+.section-label{
+  font-family:'Space Mono',monospace;
+  font-size:11px;letter-spacing:.2em;
+  color:var(--teal);text-transform:uppercase;
+  margin-bottom:16px;display:block;
+}
+.section-title{
+  font-size:clamp(28px,4vw,44px);
+  font-weight:700;line-height:1.15;
+  letter-spacing:-.01em;
+  margin-bottom:16px;
+}
+.section-desc{
+  font-size:15px;color:var(--text2);
+  max-width:560px;line-height:1.9;
+  margin-bottom:64px;
+}
+
+/* REVEAL ANIMATION */
+.reveal{
+  opacity:0;transform:translateY(28px);
+  transition:opacity .7s ease, transform .7s ease;
+}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* OVERVIEW GRID */
+.overview-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+}
+.ov-card{
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:16px;padding:32px;
+  transition:border-color .25s;
+}
+.ov-card:hover{border-color:var(--teal)}
+.ov-card-num{
+  font-family:'Space Mono',monospace;
+  font-size:11px;color:var(--teal);
+  letter-spacing:.12em;margin-bottom:16px;
+}
+.ov-card-title{
+  font-size:17px;font-weight:700;margin-bottom:10px;
+}
+.ov-card-desc{font-size:14px;color:var(--text2);line-height:1.9}
+.ov-card.wide{grid-column:1/-1}
+.value-list{
+  display:flex;flex-direction:column;gap:16px;
+  margin-top:20px;
+}
+.value-item{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:16px;background:var(--bg3);
+  border-radius:10px;border:0.5px solid var(--border);
+}
+.value-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--teal);margin-top:7px;flex-shrink:0;
+}
+.value-text{font-size:14px;color:var(--text2)}
+.value-text strong{color:var(--text);font-weight:500}
+
+/* FEATURES */
+.feature-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+.feat-card{
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:14px;padding:28px;
+  position:relative;overflow:hidden;
+  transition:border-color .25s,transform .25s;
+}
+.feat-card:hover{border-color:var(--teal);transform:translateY(-2px)}
+.feat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.feat-card:hover::before{opacity:1}
+.feat-icon{
+  width:44px;height:44px;border-radius:10px;
+  border:0.5px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;margin-bottom:18px;
+  background:var(--bg3);
+}
+.feat-title{font-size:15px;font-weight:700;margin-bottom:8px}
+.feat-desc{font-size:13px;color:var(--text2);line-height:1.8}
+.feat-tag{
+  display:inline-block;margin-top:14px;
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:.1em;
+  color:var(--teal);
+  padding:4px 10px;border-radius:100px;
+  background:rgba(0,212,170,.07);
+  border:0.5px solid rgba(0,212,170,.2);
+}
+
+/* FORMULA SECTION */
+.formula-wrap{
+  display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:start;
+}
+.formula-box{
+  background:var(--bg2);border:0.5px solid var(--amber);
+  border-radius:16px;padding:36px;
+  position:relative;overflow:hidden;
+}
+.formula-box::after{
+  content:'';position:absolute;
+  top:-60px;right:-60px;
+  width:200px;height:200px;
+  background:radial-gradient(circle,rgba(255,184,0,.08),transparent 70%);
+  pointer-events:none;
+}
+.formula-label{
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:.15em;
+  color:var(--amber);margin-bottom:20px;
+}
+.formula-main{
+  font-family:'Space Mono',monospace;
+  font-size:15px;line-height:2.2;
+  color:var(--text);
+}
+.formula-main .hl{color:var(--teal)}
+.formula-main .hl2{color:var(--amber)}
+.formula-main .hl3{color:var(--pink)}
+.formula-divider{
+  border:none;
+  border-top:0.5px solid var(--border2);
+  margin:20px 0;
+}
+.formula-sub{
+  font-size:13px;color:var(--text2);line-height:2;
+  font-family:'Space Mono',monospace;
+}
+.score-breakdown{
+  display:flex;flex-direction:column;gap:16px;
+}
+.score-item{
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:12px;padding:20px;
+}
+.score-item-head{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px;
+}
+.score-item-title{font-size:14px;font-weight:500}
+.score-item-pct{
+  font-family:'Space Mono',monospace;
+  font-size:12px;color:var(--teal);
+}
+.score-bar-bg{
+  height:4px;background:var(--border2);
+  border-radius:100px;overflow:hidden;
+}
+.score-bar{height:100%;border-radius:100px;transition:width 1.2s ease}
+
+/* FLOW SECTION */
+.flow-wrap{
+  display:grid;grid-template-columns:1fr 1fr;gap:40px;
+}
+.flow-diagram{
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:16px;padding:32px;
+}
+.flow-title{
+  font-size:13px;font-weight:500;color:var(--teal);
+  margin-bottom:24px;letter-spacing:.04em;
+}
+.flow-node{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;margin-bottom:4px;
+  background:var(--bg3);border:0.5px solid var(--border);
+  border-radius:8px;font-size:13px;
+  transition:border-color .2s;
+}
+.flow-node:hover{border-color:var(--teal)}
+.flow-node-dot{
+  width:8px;height:8px;border-radius:50%;
+  flex-shrink:0;
+}
+.flow-arrow{
+  width:1px;height:20px;
+  background:linear-gradient(var(--border2),var(--teal));
+  margin:0 0 4px 19px;opacity:.6;
+}
+.flow-node-label{flex:1;color:var(--text)}
+.flow-node-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.flow-right{display:flex;flex-direction:column;gap:16px}
+.flow-output{
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:12px;padding:20px;
+  transition:border-color .2s;
+}
+.flow-output:hover{border-color:var(--pink)}
+.flow-output-icon{font-size:20px;margin-bottom:10px}
+.flow-output-title{font-size:14px;font-weight:700;margin-bottom:6px}
+.flow-output-desc{font-size:13px;color:var(--text2);line-height:1.8}
+.flow-output.pink{border-color:rgba(255,107,157,.3)}
+
+/* DASHBOARD MOCKUP */
+.dashboard{
+  background:var(--bg2);
+  border:0.5px solid var(--border);
+  border-radius:20px;overflow:hidden;
+}
+.dash-bar{
+  background:var(--bg3);border-bottom:0.5px solid var(--border);
+  padding:12px 20px;display:flex;align-items:center;gap:10px;
+}
+.dash-dot{width:8px;height:8px;border-radius:50%}
+.dash-title{
+  font-family:'Space Mono',monospace;
+  font-size:11px;color:var(--text3);
+  margin-left:auto;letter-spacing:.06em;
+}
+.dash-body{
+  display:grid;grid-template-columns:280px 1fr;
+  min-height:460px;
+}
+.dash-left{
+  border-right:0.5px solid var(--border);
+  padding:20px;
+}
+.dash-section-title{
+  font-size:11px;color:var(--text3);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:12px;
+  font-family:'Space Mono',monospace;
+}
+.brief-card{
+  background:var(--bg3);border:0.5px solid var(--border);
+  border-radius:10px;padding:14px;margin-bottom:10px;
+}
+.brief-label{
+  font-size:10px;color:var(--teal);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:6px;
+  font-family:'Space Mono',monospace;
+}
+.brief-text{font-size:12px;color:var(--text2);line-height:1.7}
+.brief-text strong{color:var(--text);font-weight:500}
+.alert-card{
+  background:rgba(255,184,0,.06);
+  border:0.5px solid rgba(255,184,0,.25);
+  border-radius:10px;padding:14px;margin-bottom:10px;
+}
+.alert-label{
+  font-size:10px;color:var(--amber);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:6px;
+  font-family:'Space Mono',monospace;
+}
+.alert-item{font-size:12px;color:var(--text2);padding:3px 0}
+.alert-name{color:var(--text);font-weight:500}
+.alert-days{color:var(--amber)}
+.free-days{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.free-day{
+  font-size:12px;color:var(--teal);
+  font-family:'Space Mono',monospace;
+}
+.dash-center{padding:20px}
+#networkCanvas{
+  width:100%;height:340px;
+  border-radius:10px;
+  background:var(--bg);
+  border:0.5px solid var(--border);
+}
+.chart-section{margin-top:16px}
+#barChart{width:100%!important;max-height:100px!important}
+
+/* FOOTER */
+footer{
+  position:relative;z-index:1;
+  padding:64px 0;
+  border-top:0.5px solid var(--border);
+  text-align:center;
+}
+.footer-brand{
+  font-family:'Space Mono',monospace;
+  font-size:28px;font-weight:700;
+  color:var(--teal);margin-bottom:16px;
+  letter-spacing:-.02em;
+}
+.footer-sub{font-size:13px;color:var(--text3);line-height:1.9}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .container{padding:0 20px}
+  .overview-grid,.feature-grid,.formula-wrap,.flow-wrap{grid-template-columns:1fr}
+  .ov-card.wide{grid-column:1}
+  .dash-body{grid-template-columns:1fr}
+  .dash-left{border-right:none;border-bottom:0.5px solid var(--border)}
+  .hero-title{font-size:44px}
+}
+</style>
+</head>
+<body>
+
+<!-- FOOTPRINT BG CANVAS -->
+<canvas id="fp-bg"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="fp-icon">👣</div>
+    발자국
+  </div>
+  <ul class="nav-links">
+    <li><a href="#overview">개요</a></li>
+    <li><a href="#features">핵심 기능</a></li>
+    <li><a href="#formula">친밀도 공식</a></li>
+    <li><a href="#flow">시스템 플로우</a></li>
+    <li><a href="#output">아웃풋</a></li>
+  </ul>
+  <span class="nav-tag">26-1 HAI · 기획서</span>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-eyebrow">소홀해진 관계 관리 매니저</span>
+  <h1 class="hero-title"><span>발</span>자<span>국</span></h1>
+  <p class="hero-sub">사용자의 구글 캘린더와 위치 데이터, 카카오톡 연락 빈도를 기반으로 인간관계를 자동으로 기록하고 브리핑해주는 에이전트.</p>
+  <div class="hero-chips">
+    <span class="chip active">Google Calendar API</span>
+    <span class="chip active">GPS / Expo</span>
+    <span class="chip active">KakaoTalk</span>
+    <span class="chip">Zero-UI</span>
+    <span class="chip">관계 별자리</span>
+  </div>
+  <div class="hero-scroll">SCROLL</div>
+</div>
+
+<!-- 01 OVERVIEW -->
+<section id="overview">
+  <div class="container">
+    <span class="section-label reveal">01 — 프로젝트 개요</span>
+    <h2 class="section-title reveal">무엇을 만드는가</h2>
+    <p class="section-desc reveal">데이터는 쌓이고, 관계는 희미해진다. 발자국은 잊혀진 인연을 데이터로 되살리는 자동화 에이전트다.</p>
+    <div class="overview-grid">
+      <div class="ov-card reveal">
+        <div class="ov-card-num">서비스 정의</div>
+        <div class="ov-card-title">관계를 추적하는 에이전트</div>
+        <div class="ov-card-desc">캘린더, GPS, 카카오톡 데이터를 교차 검증해 실제 만남과 연락을 자동으로 기록. 사용자가 인식하지 못하는 사이, 관계의 밀도를 측정한다.</div>
+      </div>
+      <div class="ov-card reveal">
+        <div class="ov-card-num">타겟 사용자</div>
+        <div class="ov-card-title">김민규 (나)</div>
+        <div class="ov-card-desc">바쁜 일상 속에 누군가와 오래 연락 안 했다는 사실을 뒤늦게 깨닫는 사람. 관계에 마음은 있지만, 먼저 연락하는 걸 자꾸 미루는 사람.</div>
+      </div>
+      <div class="ov-card wide reveal">
+        <div class="ov-card-num">핵심 가치 — 3가지</div>
+        <div class="value-list">
+          <div class="value-item">
+            <div class="value-dot"></div>
+            <div class="value-text"><strong>연락의 소홀함을 방지하는 자동화된 관계 추적.</strong> 사용자가 아무것도 하지 않아도, 만남과 연락이 자동으로 기록된다.</div>
+          </div>
+          <div class="value-item">
+            <div class="value-dot"></div>
+            <div class="value-text"><strong>사용자 입력 최소화 (Zero-UI 지향).</strong> 직접 입력 없이도 데이터가 생성된다. UI는 브리핑과 알림에만 쓰인다.</div>
+          </div>
+          <div class="value-item">
+            <div class="value-dot"></div>
+            <div class="value-text"><strong>데이터 기반의 객관적인 관계 브리핑.</strong> 감정이 아니라 숫자로, 관계의 현재 상태를 직시할 수 있다.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 FEATURES -->
+<section id="features">
+  <div class="container">
+    <span class="section-label reveal">02 — 핵심 기능</span>
+    <h2 class="section-title reveal">어떻게 작동하는가</h2>
+    <p class="section-desc reveal">4개의 데이터 소스를 실시간으로 교차 검증해 하나의 '만남 발자국'을 생성한다.</p>
+    <div class="feature-grid">
+      <div class="feat-card reveal">
+        <div class="feat-icon">📅</div>
+        <div class="feat-title">Google Calendar API</div>
+        <div class="feat-desc">식사, 저녁, 미팅, 이름 등 특정 키워드가 포함된 일정을 자동 추출해 만남 후보를 수집한다.</div>
+        <span class="feat-tag">만남 후보 수집</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">📍</div>
+        <div class="feat-title">Expo GPS 교차검증</div>
+        <div class="feat-desc">Expo 앱으로 상시 위치를 기록. 캘린더 일정의 장소와 실제 체류 여부를 교차 검증해 진짜 만남만 남긴다.</div>
+        <span class="feat-tag">위치 체류 검증</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">👣</div>
+        <div class="feat-title">FootPrints Logic</div>
+        <div class="feat-desc">캘린더 + GPS 두 데이터가 일치할 때 비로소 하나의 '만남 발자국'으로 자동 생성된다.</div>
+        <span class="feat-tag">핵심 로직</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">💬</div>
+        <div class="feat-title">카카오톡 자동 크롤링</div>
+        <div class="feat-desc">카카오톡 대화 목록을 수집, 연락 빈도와 안 읽음 수를 분석해 연락 점수를 산출한다.</div>
+        <span class="feat-tag">연락 빈도 추출</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">🌤</div>
+        <div class="feat-title">날씨 데이터 연동</div>
+        <div class="feat-desc">날씨가 좋고 일정이 없는 날짜를 추천. 소홀한 관계에게 연락하기 딱 좋은 날을 알려준다.</div>
+        <span class="feat-tag">날짜 추천</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">⭐</div>
+        <div class="feat-title">관계 별자리</div>
+        <div class="feat-desc">만남 빈도와 연락 빈도를 합산한 친밀도 점수로, 나를 중심에 둔 인간관계 네트워크를 시각화한다.</div>
+        <span class="feat-tag">최종 아웃풋</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 FORMULA -->
+<section id="formula">
+  <div class="container">
+    <span class="section-label reveal">03 — 친밀도 점수</span>
+    <h2 class="section-title reveal">관계를 어떻게 계산하는가</h2>
+    <p class="section-desc reveal">주관을 배제하고, 데이터로만 관계의 밀도를 측정하는 공식.</p>
+    <div class="formula-wrap">
+      <div class="formula-box reveal">
+        <div class="formula-label">Intimacy Score Formula</div>
+        <div class="formula-main">
+          <span class="hl">intimacyScore</span> =<br>
+          &nbsp;&nbsp;( <span class="hl3">만남 점수</span> × <span class="hl2">0.5</span> ) +<br>
+          &nbsp;&nbsp;( <span class="hl3">연락 점수</span> × <span class="hl2">0.5</span> )
+        </div>
+        <hr class="formula-divider">
+        <div class="formula-sub">
+          연락 점수 =<br>
+          &nbsp;&nbsp;recencyScore(마지막 연락일) × <span style="color:var(--teal)">0.6</span><br>
+          &nbsp;&nbsp;+ 안읽음수 기반 × <span style="color:var(--pink)">0.4</span>
+        </div>
+      </div>
+      <div class="score-breakdown reveal">
+        <div class="score-item">
+          <div class="score-item-head">
+            <span class="score-item-title">만남 점수</span>
+            <span class="score-item-pct">50%</span>
+          </div>
+          <div class="score-bar-bg"><div class="score-bar" style="width:0%;background:var(--teal)" data-w="50"></div></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:8px">캘린더 + GPS 교차 검증된 실제 만남 빈도</div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-head">
+            <span class="score-item-title">최근성 점수 (recency)</span>
+            <span class="score-item-pct">30%</span>
+          </div>
+          <div class="score-bar-bg"><div class="score-bar" style="width:0%;background:var(--teal)" data-w="30"></div></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:8px">마지막 연락일 기준 감쇠 함수 적용</div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-head">
+            <span class="score-item-title">안읽음 기반 점수</span>
+            <span class="score-item-pct">20%</span>
+          </div>
+          <div class="score-bar-bg"><div class="score-bar" style="width:0%;background:var(--pink)" data-w="20"></div></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:8px">카카오톡 안읽음 수로 연락 빈도 보정</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 FLOW -->
+<section id="flow">
+  <div class="container">
+    <span class="section-label reveal">04 — 시스템 플로우</span>
+    <h2 class="section-title reveal">데이터에서 알림까지</h2>
+    <p class="section-desc reveal">4개의 데이터 소스가 '관계 별자리'가 되고, 최종적으로 사용자에게 건네는 한마디로 이어지는 흐름.</p>
+    <div class="flow-wrap">
+      <div class="flow-diagram reveal">
+        <div class="flow-title">▸ 데이터 수집 → 친밀도 → 아웃풋</div>
+
+        <div class="flow-node"><div class="flow-node-dot" style="background:#4a9eff"></div><div><div class="flow-node-label">Google Calendar API</div><div class="flow-node-sub">일정 키워드 추출</div></div></div>
+        <div class="flow-node"><div class="flow-node-dot" style="background:#4a9eff"></div><div><div class="flow-node-label">GPS (Expo)</div><div class="flow-node-sub">실제 위치 체류 기록</div></div></div>
+        <div class="flow-arrow"></div>
+
+        <div class="flow-node" style="border-color:rgba(0,212,170,.4)"><div class="flow-node-dot" style="background:var(--teal)"></div><div><div class="flow-node-label" style="color:var(--teal)">FootPrints Logic</div><div class="flow-node-sub">일치 시 → 만남 발자국 생성</div></div></div>
+        <div class="flow-arrow"></div>
+
+        <div class="flow-node"><div class="flow-node-dot" style="background:#c77dff"></div><div><div class="flow-node-label">KakaoTalk 크롤링</div><div class="flow-node-sub">연락 빈도 + 안읽음 수</div></div></div>
+        <div class="flow-arrow"></div>
+
+        <div class="flow-node" style="border-color:rgba(255,184,0,.4)"><div class="flow-node-dot" style="background:var(--amber)"></div><div><div class="flow-node-label" style="color:var(--amber)">친밀도 점수 산출</div><div class="flow-node-sub">만남 0.5 + 연락 0.5</div></div></div>
+        <div class="flow-arrow"></div>
+
+        <div class="flow-node"><div class="flow-node-dot" style="background:#ff6b9d"></div><div><div class="flow-node-label">날씨 데이터 연동</div><div class="flow-node-sub">빈 날짜 + 좋은 날씨 매칭</div></div></div>
+        <div class="flow-arrow"></div>
+
+        <div class="flow-node" style="border-color:rgba(255,107,157,.4)"><div class="flow-node-dot" style="background:var(--pink)"></div><div><div class="flow-node-label" style="color:var(--pink)">관계 별자리 + 브리핑</div><div class="flow-node-sub">최종 아웃풋</div></div></div>
+      </div>
+
+      <div class="flow-right reveal">
+        <div class="flow-output">
+          <div class="flow-output-icon">🌟</div>
+          <div class="flow-output-title">관계 별자리</div>
+          <div class="flow-output-desc">친밀도 점수 기반 네트워크 그래프. 가까운 사람일수록 나와 거리가 가깝고 원이 크다.</div>
+        </div>
+        <div class="flow-output pink">
+          <div class="flow-output-icon">📢</div>
+          <div class="flow-output-title">멀어진 관계 카톡 알림</div>
+          <div class="flow-output-desc">친밀도 점수가 낮아지면 자동 알림. "김준영과 30일째 연락이 없어요."</div>
+        </div>
+        <div class="flow-output">
+          <div class="flow-output-icon">📆</div>
+          <div class="flow-output-title">일정 없는 날 추천</div>
+          <div class="flow-output-desc">날씨 좋고 한가한 날을 골라, 연락하기 좋은 날짜를 제안한다.</div>
+        </div>
+        <div class="flow-output" style="border-color:rgba(0,212,170,.25)">
+          <div class="flow-output-icon">💬</div>
+          <div class="flow-output-title">소홀한 관계에게 건네는 한마디</div>
+          <div class="flow-output-desc">맥락을 파악한 AI가 자연스러운 첫 메시지 초안을 작성해준다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 OUTPUT -->
+<section id="output">
+  <div class="container">
+    <span class="section-label reveal">05 — 최종 아웃풋</span>
+    <h2 class="section-title reveal">발자국 대시보드</h2>
+    <p class="section-desc reveal">매니저의 브리핑, 관계 별자리, 만남 기록이 하나의 화면에.</p>
+    <div class="dashboard reveal">
+      <div class="dash-bar">
+        <div class="dash-dot" style="background:#ff5f57"></div>
+        <div class="dash-dot" style="background:#ffbd2e"></div>
+        <div class="dash-dot" style="background:#28c840"></div>
+        <span class="dash-title">나의 발자국 매니저 · 4월 22일 (수)</span>
+      </div>
+      <div class="dash-body">
+        <div class="dash-left">
+          <div class="dash-section-title">이번 주 관계 리포트</div>
+          <div class="brief-card">
+            <div class="brief-label">📋 브리핑</div>
+            <div class="brief-text">
+              총 만남 횟수 <strong>7회</strong><br>
+              가장 많이 만난 사람 <strong>김대환 (2회)</strong><br>
+              주로 머문 장소 <strong>반포한강공원 (1회)</strong>
+            </div>
+          </div>
+          <div class="alert-card">
+            <div class="alert-label">⚠️ 멀어진 인연들</div>
+            <div class="alert-item"><span class="alert-name">김준영</span> — <span class="alert-days">30일 전</span></div>
+            <div class="alert-item"><span class="alert-name">주태양</span> — <span class="alert-days">38일 전</span></div>
+          </div>
+          <div class="brief-card">
+            <div class="brief-label">📅 가까운 빈 날짜</div>
+            <div class="free-days">
+              <span class="free-day">2026-04-24 (금) ☀️</span>
+              <span class="free-day">2026-04-26 (일) ⛅</span>
+              <span class="free-day">2026-04-30 (목) ☀️</span>
+            </div>
+          </div>
+        </div>
+        <div class="dash-center">
+          <div class="dash-section-title">관계 별자리</div>
+          <canvas id="networkCanvas"></canvas>
+          <div class="chart-section">
+            <div class="dash-section-title" style="margin-top:14px">친구별 만남 횟수</div>
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-brand">👣 발자국</div>
+    <div class="footer-sub">
+      소홀해진 관계 관리 매니저<br>
+      26-1 HAI · Agent Design · 김민규<br><br>
+      <span style="color:var(--text3)">Google Calendar · GPS (Expo) · KakaoTalk · Weather API</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── FOOTPRINT BG CANVAS ── */
+(function(){
+  const c=document.getElementById('fp-bg');
+  const ctx=c.getContext('2d');
+  let fps=[];
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight*3}
+  resize();
+  function drawFP(x,y,size,angle,col){
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+    ctx.fillStyle=col;
+    function ellipse(ex,ey,rx,ry){
+      ctx.beginPath();ctx.ellipse(ex,ey,rx,ry,0,0,Math.PI*2);ctx.fill();
+    }
+    ellipse(0,0,size*.45,size*.65);
+    ellipse(-size*.55,size*.35,size*.18,size*.24);
+    ellipse(-size*.35,size*.65,size*.16,size*.22);
+    ellipse(size*.05,size*.72,size*.16,size*.22);
+    ellipse(size*.4,size*.6,size*.14,size*.2);
+    ctx.restore();
+  }
+  const teal='#00d4aa';
+  for(let i=0;i<120;i++){
+    const x=Math.random()*window.innerWidth;
+    const y=Math.random()*window.innerHeight*3;
+    const s=8+Math.random()*18;
+    const a=Math.random()*Math.PI*2;
+    drawFP(x,y,s,a,teal);
+  }
+})();
+
+/* ── SCROLL REVEAL ── */
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      if(e.target.querySelector('.score-bar')){
+        e.target.querySelectorAll('.score-bar').forEach(b=>{
+          b.style.width=b.dataset.w+'%';
+        });
+      }
+    }
+  });
+},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+/* ── NETWORK GRAPH ── */
+const canvas=document.getElementById('networkCanvas');
+const ctx2=canvas.getContext('2d');
+const PR=window.devicePixelRatio||1;
+
+function setupCanvas(c){
+  const r=c.getBoundingClientRect();
+  c.width=r.width*PR;c.height=r.height*PR;
+  const cx=c.getContext('2d');cx.scale(PR,PR);
+  return r;
+}
+
+const people=[
+  {name:'나',color:'#00d4aa',size:18,angle:0,dist:0},
+  {name:'강주연',color:'#ff6b9d',size:14,angle:Math.PI*.1,dist:100},
+  {name:'신지훈',color:'#4a9eff',size:13,angle:Math.PI*.5,dist:110},
+  {name:'한예주',color:'#c77dff',size:15,angle:Math.PI*.8,dist:95},
+  {name:'신은호',color:'#00d4aa',size:12,angle:Math.PI*1.1,dist:115},
+  {name:'성은영',color:'#ffb800',size:12,angle:Math.PI*1.4,dist:105},
+  {name:'류한나',color:'#4a9eff',size:11,angle:Math.PI*1.7,dist:120},
+  {name:'김세현',color:'#ff6b9d',size:11,angle:Math.PI*2.0,dist:110},
+  {name:'김대환',color:'#c77dff',size:13,angle:Math.PI*2.3,dist:100},
+  {name:'민경필',color:'#ffb800',size:10,angle:Math.PI*1.55,dist:160},
+  {name:'이현숙',color:'#4a9eff',size:9,angle:Math.PI*.35,dist:170},
+  {name:'문정원',color:'#ff6b9d',size:8,angle:Math.PI*.65,dist:175},
+];
+
+let t=0;
+function drawNetwork(){
+  const r=setupCanvas(canvas);
+  const W=r.width,H=r.height;
+  const cx2=canvas.getContext('2d');
+  cx2.scale(PR,PR);
+  cx2.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2-10;
+
+  people.forEach((p,i)=>{
+    if(i===0)return;
+    const wobble=Math.sin(t*.6+i)*4;
+    const px=cx+Math.cos(p.angle+t*.015)*( p.dist+wobble);
+    const py=cy+Math.sin(p.angle+t*.015)*(p.dist*.75+wobble);
+    cx2.beginPath();
+    cx2.moveTo(cx,cy);cx2.lineTo(px,py);
+    cx2.strokeStyle=p.color+'33';
+    cx2.lineWidth=p.size*.08;
+    cx2.stroke();
+    cx2.beginPath();
+    cx2.arc(px,py,p.size/2,0,Math.PI*2);
+    cx2.fillStyle=p.color+'44';
+    cx2.fill();
+    cx2.beginPath();
+    cx2.arc(px,py,p.size/2-2,0,Math.PI*2);
+    cx2.fillStyle=p.color;
+    cx2.fill();
+    cx2.fillStyle='#080e09';
+    cx2.font=`bold ${Math.max(9,p.size*.7)}px 'Noto Sans KR',sans-serif`;
+    cx2.textAlign='center';
+    cx2.textBaseline='middle';
+    cx2.fillText(p.name.slice(-1),px,py);
+    cx2.fillStyle='#7a9b7d';
+    cx2.font=`${Math.max(8,p.size*.6)}px 'Noto Sans KR',sans-serif`;
+    cx2.fillText(p.name,px,py+p.size/2+9);
+  });
+
+  cx2.beginPath();
+  cx2.arc(cx,cy,18,0,Math.PI*2);
+  cx2.fillStyle='#00d4aa33';cx2.fill();
+  cx2.beginPath();
+  cx2.arc(cx,cy,12,0,Math.PI*2);
+  cx2.fillStyle='#00d4aa';cx2.fill();
+  cx2.fillStyle='#080e09';
+  cx2.font="bold 10px 'Noto Sans KR',sans-serif";
+  cx2.textAlign='center';cx2.textBaseline='middle';
+  cx2.fillText('나',cx,cy);
+
+  t++;requestAnimationFrame(drawNetwork);
+}
+requestAnimationFrame(drawNetwork);
+
+/* ── BAR CHART ── */
+const friends=['강주연','신은호','주태양','김대환','이현숙','성은영','류한나','김세현'];
+const thisMonth=[3,3,2,2,2,1,1,1];
+const lastMonth=[2,1,3,1,1,2,1,2];
+new Chart(document.getElementById('barChart'),{
+  type:'bar',
+  data:{
+    labels:friends,
+    datasets:[
+      {label:'이번 달',data:thisMonth,backgroundColor:'rgba(0,212,170,.7)',borderRadius:4},
+      {label:'지난 달',data:lastMonth,backgroundColor:'rgba(0,212,170,.2)',borderRadius:4},
+    ]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#7a9b7d',font:{size:10}}}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#7a9b7d',font:{size:10}}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#7a9b7d',font:{size:10},stepSize:1}},
+    }
+  }
+});
+</script>
+</body>
+</html>
