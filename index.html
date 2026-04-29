@@ -483,6 +483,71 @@ footer{
   border-radius:100px;color:var(--muted);
 }
 
+/* ── CASES SECTION ── */
+.cases-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+  margin-bottom:56px;
+}
+.case-card{
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  transition:border-color .25s;
+}
+.case-card:hover{border-color:var(--accent-border)}
+.case-card-header{
+  padding:14px 20px;border-bottom:0.5px solid var(--border);
+  background:var(--panel2);
+  display:flex;align-items:center;gap:8px;
+}
+.case-card-label{
+  font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--muted);letter-spacing:.1em;
+}
+.case-card-img{
+  width:100%;display:block;
+  object-fit:contain;
+}
+.case-card-body{
+  padding:20px;
+}
+.case-card-title{
+  font-size:15px;font-weight:700;margin-bottom:8px;
+}
+.case-card-desc{
+  font-size:13px;color:var(--muted);line-height:1.85;
+}
+
+/* ── LIMITS SECTION ── */
+.limits-list{
+  display:flex;flex-direction:column;gap:16px;
+  max-width:760px;
+}
+.limit-item{
+  display:flex;gap:20px;align-items:flex-start;
+  background:var(--panel);border:0.5px solid var(--border);
+  border-radius:14px;padding:24px 28px;
+  transition:border-color .25s;
+}
+.limit-item:hover{border-color:rgba(255,95,87,.3)}
+.limit-num{
+  font-family:'Space Mono',monospace;font-size:11px;
+  color:rgba(255,95,87,.7);letter-spacing:.14em;
+  flex-shrink:0;padding-top:2px;
+}
+.limit-body{}
+.limit-title{
+  font-size:15px;font-weight:700;margin-bottom:7px;line-height:1.4;
+}
+.limit-desc{
+  font-size:13px;color:var(--muted);line-height:1.85;
+}
+.limit-img-wrap{
+  margin-top:20px;border-radius:12px;overflow:hidden;
+  border:0.5px solid var(--border);
+  max-width:420px;
+}
+.limit-img-wrap img{width:100%;display:block;object-fit:contain;}
+
 /* ANIMATIONS */
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:.3}50%{opacity:.7}}
@@ -493,7 +558,7 @@ footer{
   .nav-links,.nav-badge{display:none}
   .container{padding:0 20px}
   section{padding:80px 0}
-  .problem-grid,.arch-grid{grid-template-columns:1fr}
+  .problem-grid,.arch-grid,.cases-grid{grid-template-columns:1fr}
   .feat-section{grid-template-columns:1fr;gap:32px}
   .feat-section.reverse{direction:ltr}
   .dash-inner{grid-template-columns:1fr}
@@ -515,6 +580,8 @@ footer{
     <li><a href="#problem">문제 정의</a></li>
     <li><a href="#features">핵심 기능</a></li>
     <li><a href="#architecture">아키텍처</a></li>
+    <li><a href="#cases">적용 사례</a></li>
+    <li><a href="#limits">한계</a></li>
   </ul>
   <div class="nav-badge">HAI 26-1 · 김민규</div>
 </nav>
@@ -908,6 +975,104 @@ footer{
           <img src="assets/연락발자국 히트맵이지미.png" alt="연락발자국 히트맵" style="width:100%;height:100%;object-fit:contain;display:block">
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 04 CASES ── -->
+<section id="cases">
+  <div class="container">
+    <span class="sec-label reveal">04 — 적용 사례</span>
+    <h2 class="sec-title reveal">실제로 어떻게 쓰이는가</h2>
+    <p class="sec-desc reveal">
+      발자국이 연락 데이터를 수집하면, AI 매니저가 이렇게 읽어낸다.
+    </p>
+    <div class="cases-grid">
+      <div class="case-card reveal">
+        <div class="case-card-header">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="case-card-label">연락한 예시 — 읽기 전</span>
+        </div>
+        <img class="case-card-img" src="assets/연락한 예시.png" alt="연락한 예시 1">
+        <div class="case-card-body">
+          <div class="case-card-title">수집된 연락 발자국</div>
+          <div class="case-card-desc">
+            카카오톡에서 자동 수집된 채팅방 목록. 이름과 마지막 연락일만 기록해
+            프라이버시를 보호하면서도 관계 온도를 측정한다.
+          </div>
+        </div>
+      </div>
+      <div class="case-card reveal">
+        <div class="case-card-header">
+          <div class="feat-chrome-dot" style="background:#ff5f57"></div>
+          <div class="feat-chrome-dot" style="background:#ffbd2e"></div>
+          <div class="feat-chrome-dot" style="background:#28c840"></div>
+          <span class="case-card-label">연락한 예시 — AI 분석 후</span>
+        </div>
+        <img class="case-card-img" src="assets/연락한 예시2.png" alt="연락한 예시 2">
+        <div class="case-card-body">
+          <div class="case-card-title">AI 매니저 브리핑 결과</div>
+          <div class="case-card-desc">
+            수집된 데이터를 바탕으로 "마지막 연락이 30일 이상 된 친구"를 자동으로
+            감지하고, 오늘 연락하기 좋은 사람과 첫 메시지 초안을 제시한다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 05 LIMITS ── -->
+<section id="limits">
+  <div class="container">
+    <span class="sec-label reveal">05 — 한계</span>
+    <h2 class="sec-title reveal">아직 풀지 못한 문제들</h2>
+    <p class="sec-desc reveal">
+      솔직하게 말한다. 발자국이 아직 해결하지 못한 세 가지.
+    </p>
+    <div class="limits-list">
+
+      <div class="limit-item reveal">
+        <div class="limit-num">LIMIT 01</div>
+        <div class="limit-body">
+          <div class="limit-title">에이전트를 쓴다는 걸 상대가 알게 되면</div>
+          <div class="limit-desc">
+            발자국이 AI로 연락을 보내고 있다는 사실을 상대방이 인식하는 순간,
+            내가 보내는 모든 메시지의 진정성이 의심받을 수 있다.
+            "이것도 AI가 쓴 거 아니야?"라는 신뢰 붕괴 — 기술이 관계를 해칠 수 있는 가장 큰 리스크다.
+          </div>
+          <div class="limit-img-wrap">
+            <img src="assets/부작용.png" alt="부작용 이미지">
+          </div>
+        </div>
+      </div>
+
+      <div class="limit-item reveal">
+        <div class="limit-num">LIMIT 02</div>
+        <div class="limit-body">
+          <div class="limit-title">통화·인스타 DM은 수집하지 못한다</div>
+          <div class="limit-desc">
+            현재 발자국은 카카오톡 채팅방 목록만 읽어온다.
+            전화 통화나 인스타그램 DM으로 연락하는 사람은 발자국에 기록되지 않아
+            관계 지도가 불완전해진다. 수집 채널을 확장하는 것이 다음 과제다.
+          </div>
+        </div>
+      </div>
+
+      <div class="limit-item reveal">
+        <div class="limit-num">LIMIT 03</div>
+        <div class="limit-body">
+          <div class="limit-title">캘린더에 없는 즉흥 만남은 직접 입력해야 한다</div>
+          <div class="limit-desc">
+            편의점 앞에서 우연히 마주쳤거나, 캘린더에 따로 남기지 않은 가벼운 만남은
+            GPS 교차 검증만으로는 자동 감지가 어렵다. 이런 경우엔 여전히 사용자가
+            직접 발자국을 추가해야 하는 번거로움이 남아 있다.
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
